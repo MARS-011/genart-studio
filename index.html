@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ORBIS — GEN.ART STUDIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#f0ebe0;--cream2:#e8e2d4;--cream3:#ddd6c4;
+  --blue:#0015ff;--blue2:#0010cc;--red:#e8190a;
+  --ink:#080808;--ink2:#1a1a1a;--muted:#8a7f6e;
+  --mono:'Space Mono',monospace;--display:'Bebas Neue',sans-serif;
+  --bw:2px;--r:0px;
+}
+html,body{height:100%;background:var(--cream);color:var(--ink);font-family:var(--mono);overflow:hidden;}
+
+/* ── Layout ──────────────────────────────────────── */
+#app{display:grid;grid-template-columns:270px 1fr;grid-template-rows:64px 1fr;height:100vh;}
+#topbar{grid-column:1/-1;display:flex;align-items:center;padding:0 20px;gap:0;border-bottom:var(--bw) solid var(--ink);background:var(--ink);position:relative;overflow:hidden;}
+#sidebar{border-right:var(--bw) solid var(--ink);background:var(--cream2);overflow-y:auto;display:flex;flex-direction:column;}
+#canvas-area{display:flex;flex-direction:column;background:var(--cream);position:relative;}
+
+/* ── Topbar ──────────────────────────────────────── */
+.logo{font-family:var(--display);font-size:34px;letter-spacing:.14em;color:var(--cream);line-height:1;margin-right:28px;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-family:var(--mono);margin-top:-2px;}
+.logo-wrap{display:flex;flex-direction:column;justify-content:center;border-right:1px solid #2a2a2a;padding-right:24px;margin-right:20px;}
+.ttab-wrap{display:flex;height:100%;}
+.ttab{background:none;border:none;border-right:1px solid #2a2a2a;font-family:var(--mono);font-size:10px;font-weight:700;color:#666;padding:0 20px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .1s;position:relative;height:100%;}
+.ttab:hover{color:var(--cream);background:#1a1a1a;}
+.ttab.active{color:var(--blue);background:#111;}
+.ttab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--blue);}
+.ttab-num{font-size:8px;color:#444;margin-right:6px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+#export-btn{background:none;border:1px solid #444;font-family:var(--mono);font-size:10px;font-weight:700;color:#aaa;padding:7px 16px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:all .15s;}
+#export-btn:hover{border-color:var(--blue);color:var(--blue);}
+.topbar-tag{font-size:8px;color:#333;letter-spacing:.12em;border:1px solid #333;padding:3px 8px;text-transform:uppercase;}
+
+/* ── Sidebar ─────────────────────────────────────── */
+#sidebar::-webkit-scrollbar{width:3px;}
+#sidebar::-webkit-scrollbar-thumb{background:var(--ink);}
+.sidebar-header{padding:12px 14px 10px;border-bottom:var(--bw) solid var(--ink);background:var(--cream3);}
+.sidebar-header .sh-label{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.sidebar-header .sh-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);}
+.sidebar-section{padding:10px 14px;border-bottom:1px solid var(--cream3);}
+.sec-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sec-label::before{content:'×';color:var(--blue);font-size:10px;}
+.ctrl-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.ctrl-row label{font-size:9px;color:var(--ink2);width:76px;flex-shrink:0;letter-spacing:.04em;text-transform:uppercase;}
+.ctrl-row input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--cream3);outline:none;border:none;}
+.ctrl-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--ink);cursor:pointer;border:2px solid var(--blue);}
+.ctrl-row input[type=range]:focus::-webkit-slider-thumb{background:var(--blue);}
+.val{font-size:9px;font-weight:700;color:var(--blue);min-width:34px;text-align:right;font-family:var(--mono);}
+.sbtn{background:none;border:var(--bw) solid var(--ink);font-family:var(--mono);font-size:9px;font-weight:700;color:var(--ink);padding:6px 10px;cursor:pointer;letter-spacing:.07em;text-transform:uppercase;transition:all .1s;flex:1;}
+.sbtn:hover{background:var(--ink);color:var(--cream);}
+.sbtn.blue{border-color:var(--blue);color:var(--blue);}
+.sbtn.blue:hover{background:var(--blue);color:var(--cream);}
+.sbtn.red{border-color:var(--red);color:var(--red);}
+.sbtn.red:hover{background:var(--red);color:var(--cream);}
+.btn-row{display:flex;gap:6px;margin-top:4px;}
+select{width:100%;background:var(--cream);border:var(--bw) solid var(--ink);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 8px;outline:none;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23080808'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+select:focus{border-color:var(--blue);}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px;}
+.prbtn{background:var(--cream);border:1px solid var(--cream3);font-family:var(--mono);font-size:8px;font-weight:700;color:var(--muted);padding:6px 4px;cursor:pointer;text-align:center;letter-spacing:.04em;text-transform:uppercase;transition:all .1s;}
+.prbtn:hover{border-color:var(--ink);color:var(--ink);}
+.prbtn.on{border-color:var(--blue);color:var(--blue);background:var(--cream2);}
+
+/* ── Canvas ──────────────────────────────────────── */
+#cnv-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;}
+canvas{max-width:100%;max-height:100%;display:block;border:var(--bw) solid var(--ink);}
+
+/* ── Status bar ──────────────────────────────────── */
+#statusbar{height:36px;border-top:var(--bw) solid var(--ink);display:flex;align-items:center;padding:0 16px;gap:0;background:var(--ink);}
+.stat-item{font-size:9px;color:#666;letter-spacing:.08em;text-transform:uppercase;padding:0 16px;border-right:1px solid #222;}
+.stat-item:first-child{padding-left:0;}
+.stat-item span{color:var(--blue);}
+.stat-item.red span{color:var(--red);}
+#fps{margin-left:auto;font-size:9px;color:#333;font-family:var(--mono);}
+
+/* ── Play btn ────────────────────────────────────── */
+#playbtn{background:var(--blue);border:none;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--cream);padding:7px 18px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .1s;width:100%;margin-bottom:8px;}
+#playbtn:hover{background:var(--blue2);}
+#playbtn.stop{background:var(--red);}
+
+/* ── Tool panels ─────────────────────────────────── */
+.tool-panel{display:none;}
+.tool-panel.on{display:block;}
+
+/* ── Decorative ──────────────────────────────────── */
+.x-deco{color:var(--blue);font-size:9px;letter-spacing:.06em;}
+.bar-track{height:3px;background:var(--cream3);position:relative;margin-top:3px;}
+.bar-fill{height:100%;background:var(--blue);transition:width .3s;}
+
+/* ── Well dots on canvas overlay ─────────────────── */
+#overlay{position:absolute;top:20px;left:20px;right:20px;bottom:36px;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo-wrap">
+    <div class="logo">ORBIS</div>
+    <div class="logo-sub">Gen.Art Studio</div>
+  </div>
+  <div class="ttab-wrap">
+    <button class="ttab active" onclick="switchTool('gravity',this)"><span class="ttab-num">01</span>GRAVITY</button>
+    <button class="ttab" onclick="switchTool('attractor',this)"><span class="ttab-num">02</span>ATTRACTOR</button>
+    <button class="ttab" onclick="switchTool('flame',this)"><span class="ttab-num">03</span>FLAME</button>
+    <button class="ttab" onclick="switchTool('anim',this)"><span class="ttab-num">04</span>ANIMATED</button>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-tag">× × ×</div>
+    <button id="export-btn" onclick="exportPNG()">↓ Export PNG</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+
+  <!-- GRAVITY PANEL -->
+  <div id="panel-gravity" class="tool-panel on">
+    <div class="sidebar-header">
+      <div class="sh-label">× Mode 01</div>
+      <div class="sh-title">Gravitational Particle Tracer</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Well configuration</div>
+      <select id="gv-arrange" onchange="schedGravity()">
+        <option value="triangle">Triangle (3 wells)</option>
+        <option value="line">Line (3 wells)</option>
+        <option value="square">Square (4 wells)</option>
+        <option value="pentagon">Pentagon (5 wells)</option>
+        <option value="two">Binary (2 wells)</option>
+        <option value="random">Random</option>
+      </select>
+      <div class="ctrl-row"><label>Mass</label><input type="range" id="gv-mass" min="0.01" max="0.3" step="0.005" value="0.08" oninput="updS('gv-mass','gv-massv');schedGravity()"><div class="val" id="gv-massv">0.08</div></div>
+      <div class="ctrl-row"><label>Softening</label><input type="range" id="gv-soft" min="0.002" max="0.15" step="0.001" value="0.025" oninput="updS('gv-soft','gv-softv');schedGravity()"><div class="val" id="gv-softv">0.025</div></div>
+      <div class="ctrl-row"><label>Init velocity</label><input type="range" id="gv-vel" min="0" max="0.3" step="0.005" value="0.06" oninput="updS('gv-vel','gv-velv');schedGravity()"><div class="val" id="gv-velv">0.060</div></div>
+      <div class="ctrl-row"><label>Damping</label><input type="range" id="gv-damp" min="0.95" max="1.0" step="0.001" value="0.997" oninput="updS('gv-damp','gv-dampv');schedGravity()"><div class="val" id="gv-dampv">0.997</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Trace parameters</div>
+      <div class="ctrl-row"><label>Particles</label><input type="range" id="gv-n" min="10000" max="200000" step="5000" value="80000" oninput="updSK('gv-n','gv-nv');schedGravity()"><div class="val" id="gv-nv">80k</div></div>
+      <div class="ctrl-row"><label>Steps/ptcl</label><input type="range" id="gv-steps" min="20" max="300" step="10" value="120" oninput="updS('gv-steps','gv-stepsv');schedGravity()"><div class="val" id="gv-stepsv">120</div></div>
+      <div class="ctrl-row"><label>Gamma</label><input type="range" id="gv-gamma" min="0.1" max="1.2" step="0.01" value="0.28" oninput="updS('gv-gamma','gv-gammav');schedGravity()"><div class="val" id="gv-gammav">0.28</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Style</div>
+      <select id="gv-pal" onchange="schedGravity()">
+        <option value="pencil">Pencil on cream</option>
+        <option value="blueprint">Blueprint</option>
+        <option value="darkink">Dark ink</option>
+        <option value="redliner">Red liner</option>
+        <option value="cyanotype">Cyanotype</option>
+      </select>
+    </div>
+    <div class="sidebar-section">
+      <div class="btn-row">
+        <button class="sbtn blue" onclick="randomizeGravity()">Randomize ↺</button>
+        <button class="sbtn" onclick="schedGravity()">Redraw</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTRACTOR PANEL -->
+  <div id="panel-attractor" class="tool-panel">
+    <div class="sidebar-header">
+      <div class="sh-label">× Mode 02</div>
+      <div class="sh-title">Strange Attractor</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">System type</div>
+      <select id="atr-type" onchange="schedAtr()">
+        <option value="clifford">Clifford</option>
+        <option value="dejong">Peter de Jong</option>
+        <option value="bedhead">Bedhead</option>
+        <option value="svensson">Svensson</option>
+      </select>
+      <div class="sec-label">Presets</div>
+      <div class="preset-grid">
+        <button class="prbtn on" onclick="atrPre(-1.7,1.8,-1.9,-0.4,this)">Classic</button>
+        <button class="prbtn" onclick="atrPre(-1.4,1.6,1.0,0.7,this)">Coral</button>
+        <button class="prbtn" onclick="atrPre(1.5,-1.8,1.6,0.9,this)">Wing</button>
+        <button class="prbtn" onclick="atrPre(-2.1,2.0,-1.1,-0.2,this)">Galaxy</button>
+        <button class="prbtn" onclick="atrPre(0.9,-1.9,1.8,-1.1,this)">Vortex</button>
+        <button class="prbtn" onclick="atrPre(-1.0,1.0,-1.5,2.0,this)">Thorn</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Parameters</div>
+      <div class="ctrl-row"><label>A</label><input type="range" id="atr-a" min="-3" max="3" step="0.01" value="-1.7" oninput="updS('atr-a','atr-av');schedAtr()"><div class="val" id="atr-av">-1.70</div></div>
+      <div class="ctrl-row"><label>B</label><input type="range" id="atr-b" min="-3" max="3" step="0.01" value="1.8" oninput="updS('atr-b','atr-bv');schedAtr()"><div class="val" id="atr-bv">1.80</div></div>
+      <div class="ctrl-row"><label>C</label><input type="range" id="atr-c" min="-3" max="3" step="0.01" value="-1.9" oninput="updS('atr-c','atr-cv');schedAtr()"><div class="val" id="atr-cv">-1.90</div></div>
+      <div class="ctrl-row"><label>D</label><input type="range" id="atr-d" min="-3" max="3" step="0.01" value="-0.4" oninput="updS('atr-d','atr-dv');schedAtr()"><div class="val" id="atr-dv">-0.40</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Render</div>
+      <select id="atr-cmap" onchange="schedAtr()">
+        <option value="pencil">Pencil</option>
+        <option value="inferno">Inferno</option>
+        <option value="plasma">Plasma</option>
+        <option value="aurora">Aurora</option>
+        <option value="blueprint">Blueprint</option>
+      </select>
+      <div class="ctrl-row"><label>Iterations</label><input type="range" id="atr-n" min="50000" max="1000000" step="50000" value="400000" oninput="updSK('atr-n','atr-nv');schedAtr()"><div class="val" id="atr-nv">400k</div></div>
+      <div class="ctrl-row"><label>Gamma</label><input type="range" id="atr-gamma" min="0.1" max="1.5" step="0.01" value="0.4" oninput="updS('atr-gamma','atr-gammav');schedAtr()"><div class="val" id="atr-gammav">0.40</div></div>
+      <div class="ctrl-row"><label>Zoom</label><input type="range" id="atr-zoom" min="0.3" max="3" step="0.01" value="1" oninput="updS('atr-zoom','atr-zoomv');schedAtr()"><div class="val" id="atr-zoomv">1.00</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="btn-row">
+        <button class="sbtn blue" onclick="randomizeAtr()">Randomize ↺</button>
+        <button class="sbtn" onclick="schedAtr()">Redraw</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLAME PANEL -->
+  <div id="panel-flame" class="tool-panel">
+    <div class="sidebar-header">
+      <div class="sh-label">× Mode 03</div>
+      <div class="sh-title">Fractal Flame IFS</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Presets</div>
+      <div class="preset-grid">
+        <button class="prbtn on" onclick="flPre('default',this)">Hole</button>
+        <button class="prbtn" onclick="flPre('spiral',this)">Spiral</button>
+        <button class="prbtn" onclick="flPre('rings',this)">Rings</button>
+        <button class="prbtn" onclick="flPre('julia',this)">Julia</button>
+        <button class="prbtn" onclick="flPre('shred',this)">Shred</button>
+        <button class="prbtn" onclick="flPre('nebula',this)">Nebula</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Palette</div>
+      <select id="fl-pal" onchange="schedFlame()">
+        <option value="pencil">Pencil</option>
+        <option value="fire">Fire</option>
+        <option value="ice">Ice</option>
+        <option value="violet">Violet</option>
+        <option value="blueprint">Blueprint</option>
+        <option value="redliner">Red liner</option>
+      </select>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Variation weights</div>
+      <div class="ctrl-row"><label>Linear</label><input type="range" id="fl-w0" min="0" max="2" step="0.01" value="0.3" oninput="updS('fl-w0','fl-wv0');schedFlame()"><div class="val" id="fl-wv0">0.30</div></div>
+      <div class="ctrl-row"><label>Sinusoidal</label><input type="range" id="fl-w1" min="0" max="2" step="0.01" value="0.8" oninput="updS('fl-w1','fl-wv1');schedFlame()"><div class="val" id="fl-wv1">0.80</div></div>
+      <div class="ctrl-row"><label>Spherical</label><input type="range" id="fl-w2" min="0" max="2" step="0.01" value="1.2" oninput="updS('fl-w2','fl-wv2');schedFlame()"><div class="val" id="fl-wv2">1.20</div></div>
+      <div class="ctrl-row"><label>Swirl</label><input type="range" id="fl-w3" min="0" max="2" step="0.01" value="0.6" oninput="updS('fl-w3','fl-wv3');schedFlame()"><div class="val" id="fl-wv3">0.60</div></div>
+      <div class="ctrl-row"><label>Horseshoe</label><input type="range" id="fl-w4" min="0" max="2" step="0.01" value="0.4" oninput="updS('fl-w4','fl-wv4');schedFlame()"><div class="val" id="fl-wv4">0.40</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Render</div>
+      <div class="ctrl-row"><label>Gamma</label><input type="range" id="fl-gamma" min="0.1" max="2" step="0.01" value="0.45" oninput="updS('fl-gamma','fl-gammav');schedFlame()"><div class="val" id="fl-gammav">0.45</div></div>
+      <div class="ctrl-row"><label>Zoom</label><input type="range" id="fl-zoom" min="0.3" max="3" step="0.01" value="1.0" oninput="updS('fl-zoom','fl-zoomv');schedFlame()"><div class="val" id="fl-zoomv">1.00</div></div>
+      <div class="ctrl-row"><label>Rotate</label><input type="range" id="fl-rot" min="0" max="6.28" step="0.01" value="0" oninput="updS('fl-rot','fl-rotv');schedFlame()"><div class="val" id="fl-rotv">0.00</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="btn-row">
+        <button class="sbtn blue" onclick="randomizeFlame()">Randomize ↺</button>
+        <button class="sbtn" onclick="schedFlame()">Redraw</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANIM PANEL -->
+  <div id="panel-anim" class="tool-panel">
+    <div class="sidebar-header">
+      <div class="sh-label">× Mode 04</div>
+      <div class="sh-title">Animated Morph Engine</div>
+    </div>
+    <div class="sidebar-section">
+      <button id="playbtn" onclick="togglePlay()">▶ PLAY</button>
+      <select id="an-pal">
+        <option value="pencil">Pencil</option>
+        <option value="fire">Fire</option>
+        <option value="ice">Ice</option>
+        <option value="violet">Violet</option>
+        <option value="blueprint">Blueprint</option>
+      </select>
+      <select id="an-ease">
+        <option value="sine">Smooth</option>
+        <option value="elastic">Elastic</option>
+        <option value="bounce">Bounce</option>
+        <option value="linear">Linear</option>
+      </select>
+      <div class="btn-row">
+        <button class="sbtn" onclick="animNewKF()">New keyframe ↺</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Animation</div>
+      <div class="ctrl-row"><label>Speed</label><input type="range" id="an-spd" min="0.002" max="0.06" step="0.001" value="0.015" oninput="updS('an-spd','an-spdv')"><div class="val" id="an-spdv">0.015</div></div>
+      <div class="ctrl-row"><label>Spray</label><input type="range" id="an-spray" min="0" max="1" step="0.01" value="0.35" oninput="updS('an-spray','an-sprayv')"><div class="val" id="an-sprayv">0.35</div></div>
+      <div class="ctrl-row"><label>Zoom pulse</label><input type="range" id="an-zpulse" min="0" max="1" step="0.01" value="0.3" oninput="updS('an-zpulse','an-zpulsev')"><div class="val" id="an-zpulsev">0.30</div></div>
+      <div class="ctrl-row"><label>Rotate spd</label><input type="range" id="an-rotspd" min="0" max="0.05" step="0.001" value="0.008" oninput="updS('an-rotspd','an-rotspdv')"><div class="val" id="an-rotspdv">0.008</div></div>
+      <div class="ctrl-row"><label>Gamma</label><input type="range" id="an-gamma" min="0.1" max="2" step="0.01" value="0.45" oninput="updS('an-gamma','an-gammav')"><div class="val" id="an-gammav">0.45</div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sec-label">Keyframe weights</div>
+      <div class="ctrl-row"><label>Linear</label><input type="range" id="an-w0" min="0" max="2" step="0.01" value="0.3" oninput="updS('an-w0','an-wv0');animRestart()"><div class="val" id="an-wv0">0.30</div></div>
+      <div class="ctrl-row"><label>Sinusoidal</label><input type="range" id="an-w1" min="0" max="2" step="0.01" value="0.8" oninput="updS('an-w1','an-wv1');animRestart()"><div class="val" id="an-wv1">0.80</div></div>
+      <div class="ctrl-row"><label>Spherical</label><input type="range" id="an-w2" min="0" max="2" step="0.01" value="1.2" oninput="updS('an-w2','an-wv2');animRestart()"><div class="val" id="an-wv2">1.20</div></div>
+      <div class="ctrl-row"><label>Swirl</label><input type="range" id="an-w3" min="0" max="2" step="0.01" value="0.6" oninput="updS('an-w3','an-wv3');animRestart()"><div class="val" id="an-wv3">0.60</div></div>
+      <div class="ctrl-row"><label>Horseshoe</label><input type="range" id="an-w4" min="0" max="2" step="0.01" value="0.4" oninput="updS('an-w4','an-wv4');animRestart()"><div class="val" id="an-wv4">0.40</div></div>
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<!-- CANVAS AREA -->
+<div id="canvas-area">
+  <div id="cnv-wrap">
+    <canvas id="c"></canvas>
+  </div>
+  <div id="statusbar">
+    <div class="stat-item">tool: <span id="st-tool">gravity</span></div>
+    <div class="stat-item">pts: <span id="st-pts">—</span></div>
+    <div class="stat-item red">status: <span id="st-status">idle</span></div>
+    <div class="stat-item">params: <span id="st-params">—</span></div>
+    <div id="fps"></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const cnv=document.getElementById('c'),ctx=cnv.getContext('2d');
+let currentTool='gravity';
+let timers={};
+
+function updS(id,vid){const v=parseFloat(document.getElementById(id).value);document.getElementById(vid).textContent=v.toFixed(v<10?3:0);}
+function updSK(id,vid){const v=+document.getElementById(id).value;document.getElementById(vid).textContent=(v/1000).toFixed(0)+'k';}
+function gv(id){return parseFloat(document.getElementById(id).value);}
+function gs(id){return document.getElementById(id).value;}
+
+function getWH(){
+  const w=document.getElementById('cnv-wrap');
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.floor(w.clientWidth-40),H=Math.floor(w.clientHeight-40);
+  return[Math.round(W*dpr),Math.round(H*dpr),W,H];
+}
+
+function setStatus(s,p=''){
+  document.getElementById('st-status').textContent=s;
+  if(p)document.getElementById('st-params').textContent=p;
+}
+
+function exportPNG(){
+  const a=document.createElement('a');
+  a.download='orbis_'+currentTool+'_'+Date.now()+'.png';
+  a.href=cnv.toDataURL();a.click();
+}
+
+function switchTool(name,btn){
+  if(animPlaying){animPlaying=false;if(animRAF)cancelAnimationFrame(animRAF);document.getElementById('playbtn').textContent='▶ PLAY';document.getElementById('playbtn').classList.remove('stop');}
+  currentTool=name;
+  document.querySelectorAll('.ttab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.tool-panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('panel-'+name).classList.add('on');
+  document.getElementById('st-tool').textContent=name;
+  if(name==='gravity')schedGravity();
+  else if(name==='attractor')schedAtr();
+  else if(name==='flame')schedFlame();
+  else if(name==='anim'){initParticles();renderAnimFrame();}
+}
+
+// ═══════════════════════════════════════════════════════
+// PALETTES
+// ═══════════════════════════════════════════════════════
+function getPalColor(t,pal){
+  t=Math.max(0,Math.min(1,t));
+  if(pal==='pencil'){const v=Math.round(245*(1-t*.96));return[[v-Math.round(t*10),v-Math.round(t*5),v-Math.round(t*8)],[240,235,224]];}
+  if(pal==='blueprint'){return[[Math.round(180+t*60),Math.round(200+t*55),255],[8,18,80]];}
+  if(pal==='darkink'){const v=Math.round(t*240);return[[v,v,v],[8,8,12]];}
+  if(pal==='redliner'){return[[240,Math.round(t*30),Math.round(t*20)],[245,240,235]];}
+  if(pal==='cyanotype'){return[[Math.round(5+t*40),Math.round(40+t*120),Math.round(80+t*175)],[220,230,240]];}
+  if(pal==='fire'){
+    const s=[[0,[20,11,52]],[.25,[132,32,107]],[.5,[229,92,48]],[.75,[253,180,48]],[1,[252,255,164]]];
+    for(let i=1;i<s.length;i++){if(t<=s[i][0]){const f=(t-s[i-1][0])/(s[i][0]-s[i-1][0]),a=s[i-1][1],b=s[i][1];return[a.map((v,j)=>Math.round(v+f*(b[j]-v))),[10,5,15]];}}
+    return[[252,255,164],[10,5,15]];
+  }
+  if(pal==='ice')return[[Math.round(t*180),Math.round(t*230),255],[5,10,20]];
+  if(pal==='violet')return[[Math.round(50+t*170),Math.round(t*160),255],[8,5,18]];
+  if(pal==='aurora')return[[Math.round(t*60),Math.round(180+t*75),Math.round(120+t*135)],[5,8,20]];
+  if(pal==='plasma'){
+    const s=[[0,[13,8,135]],[.25,[126,3,168]],[.5,[204,71,120]],[.75,[248,149,64]],[1,[240,249,33]]];
+    for(let i=1;i<s.length;i++){if(t<=s[i][0]){const f=(t-s[i-1][0])/(s[i][0]-s[i-1][0]),a=s[i-1][1],b=s[i][1];return[a.map((v,j)=>Math.round(v+f*(b[j]-v))),[10,5,20]];}}
+  }
+  if(pal==='inferno'){
+    const s=[[0,[20,11,52]],[.25,[132,32,107]],[.5,[229,92,48]],[.75,[253,180,48]],[1,[252,255,164]]];
+    for(let i=1;i<s.length;i++){if(t<=s[i][0]){const f=(t-s[i-1][0])/(s[i][0]-s[i-1][0]),a=s[i-1][1],b=s[i][1];return[a.map((v,j)=>Math.round(v+f*(b[j]-v))),[10,8,20]];}}
+  }
+  return[[255,255,255],[0,0,0]];
+}
+
+function drawHist(hist,W,H,gamma,pal){
+  let mx=0;for(const v of hist)if(v>mx)mx=v;
+  const img=ctx.createImageData(W,H);
+  const bgc=getPalColor(0,pal)[1];
+  for(let i=0;i<W*H;i++){
+    const v=hist[i];
+    if(v===0){img.data[i*4]=bgc[0];img.data[i*4+1]=bgc[1];img.data[i*4+2]=bgc[2];img.data[i*4+3]=255;}
+    else{
+      const t=Math.pow(v/mx,gamma);
+      const[c]=getPalColor(t,pal);
+      img.data[i*4]=c[0];img.data[i*4+1]=c[1];img.data[i*4+2]=c[2];img.data[i*4+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+// ═══════════════════════════════════════════════════════
+// TOOL 1: GRAVITY PARTICLE TRACER
+// ═══════════════════════════════════════════════════════
+function getWells(arrange){
+  const R=1.0;
+  const configs={
+    triangle:[
+      {x:R*Math.cos(Math.PI/2),y:R*Math.sin(Math.PI/2)},
+      {x:R*Math.cos(Math.PI/2+2*Math.PI/3),y:R*Math.sin(Math.PI/2+2*Math.PI/3)},
+      {x:R*Math.cos(Math.PI/2+4*Math.PI/3),y:R*Math.sin(Math.PI/2+4*Math.PI/3)},
+    ],
+    line:[
+      {x:-1.1,y:0},{x:0,y:0.2},{x:1.1,y:0}
+    ],
+    square:[
+      {x:-0.8,y:-0.8},{x:0.8,y:-0.8},{x:0.8,y:0.8},{x:-0.8,y:0.8}
+    ],
+    pentagon:[...Array(5)].map((_,i)=>({x:R*Math.cos(i*2*Math.PI/5-Math.PI/2),y:R*Math.sin(i*2*Math.PI/5-Math.PI/2)})),
+    two:[{x:-0.9,y:0},{x:0.9,y:0}],
+    random:[...Array(3)].map(()=>({x:(Math.random()-.5)*2.2,y:(Math.random()-.5)*2.2})),
+  };
+  return configs[arrange]||configs.triangle;
+}
+
+function renderGravity(){
+  const[W,H,cw,ch]=getWH();
+  cnv.width=W;cnv.height=H;cnv.style.width=cw+'px';cnv.style.height=ch+'px';
+  setStatus('rendering…');
+
+  const arrange=gs('gv-arrange');
+  const mass=gv('gv-mass');
+  const soft=gv('gv-soft');
+  const vel=gv('gv-vel');
+  const damp=gv('gv-damp');
+  const N=gv('gv-n');
+  const STEPS=Math.round(gv('gv-steps'));
+  const gamma=gv('gv-gamma');
+  const pal=gs('gv-pal');
+  const wells=getWells(arrange);
+  const dt=0.04;
+  const SC=Math.min(W,H)*0.23;
+  const hist=new Float32Array(W*H);
+  let totalPts=0;
+
+  for(let p=0;p<N;p++){
+    // Start random — spread more widely than well radius
+    let x=(Math.random()-.5)*4.5;
+    let y=(Math.random()-.5)*4.5;
+    // Random initial velocity (tangential + radial mix)
+    const ang=Math.random()*Math.PI*2;
+    let vx=Math.cos(ang)*vel*(0.5+Math.random());
+    let vy=Math.sin(ang)*vel*(0.5+Math.random());
+
+    for(let s=0;s<STEPS;s++){
+      let fx=0,fy=0;
+      for(const w of wells){
+        const dx=w.x-x,dy=w.y-y;
+        const r2=dx*dx+dy*dy+soft*soft;
+        const r=Math.sqrt(r2);
+        const f=mass/r2;
+        fx+=f*dx/r; fy+=f*dy/r;
+      }
+      vx=(vx+fx*dt)*damp;
+      vy=(vy+fy*dt)*damp;
+      x+=vx*dt; y+=vy*dt;
+      if(Math.abs(x)>6||Math.abs(y)>6)break;
+      const px=Math.round(x*SC+W/2);
+      const py=Math.round(y*SC+H/2);
+      if(px>=0&&px<W&&py>=0&&py<H){hist[py*W+px]++;totalPts++;}
+    }
+  }
+
+  drawHist(hist,W,H,gamma,pal);
+  document.getElementById('st-pts').textContent=(totalPts/1000).toFixed(0)+'k';
+  setStatus('done',`${wells.length} wells | N=${(N/1000).toFixed(0)}k`);
+}
+
+function schedGravity(){if(timers.g)clearTimeout(timers.g);timers.g=setTimeout(renderGravity,100);}
+function randomizeGravity(){
+  document.getElementById('gv-mass').value=0.02+Math.random()*.2;updS('gv-mass','gv-massv');
+  document.getElementById('gv-soft').value=0.005+Math.random()*.08;updS('gv-soft','gv-softv');
+  document.getElementById('gv-vel').value=Math.random()*.25;updS('gv-vel','gv-velv');
+  document.getElementById('gv-damp').value=0.985+Math.random()*.015;updS('gv-damp','gv-dampv');
+  document.getElementById('gv-gamma').value=0.15+Math.random()*.4;updS('gv-gamma','gv-gammav');
+  const arrs=['triangle','line','square','pentagon','two','random'];
+  document.getElementById('gv-arrange').value=arrs[Math.floor(Math.random()*arrs.length)];
+  schedGravity();
+}
+
+// ═══════════════════════════════════════════════════════
+// TOOL 2: STRANGE ATTRACTOR
+// ═══════════════════════════════════════════════════════
+const ATR={
+  clifford:(x,y,a,b,c,d)=>[Math.sin(a*y)+c*Math.cos(a*x),Math.sin(b*x)+d*Math.cos(b*y)],
+  dejong:(x,y,a,b,c,d)=>[Math.sin(a*y)-Math.cos(b*x),Math.sin(c*x)-Math.cos(d*y)],
+  bedhead:(x,y,a,b)=>[Math.sin(x*y/(b||0.1))*y+Math.cos(a*x-y),x+Math.sin(y)/(b||0.1)],
+  svensson:(x,y,a,b,c,d)=>[d*Math.sin(a*x)-Math.sin(b*y),c*Math.cos(a*x)+Math.cos(b*y)],
+};
+function renderAttractor(){
+  const[W,H,cw,ch]=getWH();
+  cnv.width=W;cnv.height=H;cnv.style.width=cw+'px';cnv.style.height=ch+'px';
+  setStatus('rendering…');
+  const type=gs('atr-type');
+  const a=gv('atr-a'),b=gv('atr-b'),c=gv('atr-c'),d=gv('atr-d');
+  const N=gv('atr-n'),gamma=gv('atr-gamma'),zoom=gv('atr-zoom');
+  const pal=gs('atr-cmap');
+  const fn=ATR[type]||ATR.clifford;
+  let x=0,y=0;
+  const xs=new Float32Array(N),ys=new Float32Array(N);
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(let i=0;i<N;i++){
+    [x,y]=fn(x,y,a,b,c,d);
+    if(!isFinite(x)||!isFinite(y)){x=0;y=0;continue;}
+    xs[i]=x;ys[i]=y;
+    if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  const rx=x1-x0,ry=y1-y0,pad=.05;
+  const s=Math.min(W/(rx*(1+pad)*zoom),H/(ry*(1+pad)*zoom));
+  const ox=(W-rx*s)/2-x0*s,oy=(H-ry*s)/2-y0*s;
+  const hist=new Int32Array(W*H);
+  for(let i=0;i<N;i++){const px=Math.round(xs[i]*s+ox),py=Math.round(ys[i]*s+oy);if(px>=0&&px<W&&py>=0&&py<H)hist[py*W+px]++;}
+  drawHist(hist,W,H,gamma,pal);
+  document.getElementById('st-pts').textContent=(N/1000).toFixed(0)+'k';
+  setStatus('done',`a=${a.toFixed(2)} b=${b.toFixed(2)} c=${c.toFixed(2)} d=${d.toFixed(2)}`);
+}
+function schedAtr(){if(timers.a)clearTimeout(timers.a);timers.a=setTimeout(renderAttractor,80);}
+function randomizeAtr(){
+  ['atr-a','atr-b','atr-c','atr-d'].forEach(id=>{document.getElementById(id).value=-3+Math.random()*6;});
+  [['atr-a','atr-av'],['atr-b','atr-bv'],['atr-c','atr-cv'],['atr-d','atr-dv']].forEach(([s,v])=>updS(s,v));
+  document.querySelectorAll('#panel-attractor .prbtn').forEach(b=>b.classList.remove('on'));
+  schedAtr();
+}
+function atrPre(a,b,c,d,btn){
+  document.getElementById('atr-a').value=a;updS('atr-a','atr-av');
+  document.getElementById('atr-b').value=b;updS('atr-b','atr-bv');
+  document.getElementById('atr-c').value=c;updS('atr-c','atr-cv');
+  document.getElementById('atr-d').value=d;updS('atr-d','atr-dv');
+  document.querySelectorAll('#panel-attractor .prbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');schedAtr();
+}
+
+// ═══════════════════════════════════════════════════════
+// TOOL 3: FRACTAL FLAME
+// ═══════════════════════════════════════════════════════
+const FL_PRE={
+  default:{f:[{a:.5,b:.3,c:.1,d:-.3,e:.5,f:.2},{a:-.4,b:.6,c:-.2,d:.6,e:.4,f:-.1},{a:.3,b:-.5,c:.3,d:.5,e:-.3,f:.4}],w:[.3,.8,1.2,.6,.4]},
+  spiral:{f:[{a:.7,b:.2,c:0,d:-.2,e:.7,f:.1},{a:-.5,b:.5,c:-.3,d:-.5,e:-.5,f:.3},{a:.4,b:-.4,c:.2,d:.4,e:.4,f:-.2}],w:[.1,1.5,.8,1,.2]},
+  rings:{f:[{a:.6,b:0,c:0,d:0,e:.6,f:0},{a:-.6,b:0,c:.5,d:0,e:-.6,f:0},{a:0,b:.6,c:-.5,d:-.6,e:0,f:.5}],w:[0,.5,2,.3,1.5]},
+  julia:{f:[{a:.4,b:.4,c:.2,d:-.4,e:.4,f:-.2},{a:-.4,b:.4,c:-.2,d:.4,e:.4,f:.2},{a:.3,b:-.3,c:.4,d:.3,e:.3,f:-.4}],w:[.2,.3,1.8,.9,.1]},
+  shred:{f:[{a:.6,b:-.4,c:.3,d:.4,e:.6,f:-.3},{a:-.5,b:.3,c:-.1,d:.3,e:-.5,f:.2},{a:.2,b:.6,c:.1,d:-.6,e:.2,f:.4}],w:[1.2,.3,.8,1.5,.2]},
+  nebula:{f:[{a:.3,b:.5,c:.2,d:-.5,e:.3,f:.1},{a:-.3,b:.4,c:-.3,d:.4,e:.3,f:.3},{a:.5,b:-.2,c:.4,d:.2,e:.5,f:-.4}],w:[.5,1.0,1.4,.3,.8]},
+};
+let flFuncs=FL_PRE.default.f;
+function applyVar(x,y,w){
+  const r2=x*x+y*y,r=Math.sqrt(r2);
+  const tot=w.reduce((s,v)=>s+v,0)||1,tw=w.map(v=>v/tot);
+  let ox=tw[0]*x,oy=tw[0]*y;
+  ox+=tw[1]*Math.sin(x);oy+=tw[1]*Math.sin(y);
+  const s=r2>.0001?1/r2:0;ox+=tw[2]*s*x;oy+=tw[2]*s*y;
+  ox+=tw[3]*(x*Math.sin(r2)-y*Math.cos(r2));oy+=tw[3]*(x*Math.cos(r2)+y*Math.sin(r2));
+  const hs=r>.0001?1/r:0;ox+=tw[4]*hs*(x-y)*(x+y);oy+=tw[4]*hs*2*x*y;
+  return[ox,oy];
+}
+function renderFlame(){
+  const[W,H,cw,ch]=getWH();
+  cnv.width=W;cnv.height=H;cnv.style.width=cw+'px';cnv.style.height=ch+'px';
+  setStatus('rendering…');
+  const w=[0,1,2,3,4].map(i=>gv('fl-w'+i));
+  const gamma=gv('fl-gamma'),zoom=gv('fl-zoom'),rot=gv('fl-rot');
+  const pal=gs('fl-pal');
+  const cr=Math.cos(rot),sr=Math.sin(rot);
+  const N=350000;
+  let x=.1,y=0;
+  const hist=new Float32Array(W*H);
+  for(let i=0;i<N+20;i++){
+    const fi=Math.floor(Math.random()*flFuncs.length);
+    const f=flFuncs[fi];
+    const nx=f.a*x+f.b*y+f.c,ny=f.d*x+f.e*y+f.f;
+    const[vx,vy]=applyVar(nx,ny,w);
+    x=vx;y=vy;
+    if(i<20||!isFinite(x)||!isFinite(y)||Math.abs(x)>5||Math.abs(y)>5){if(i>=20){x=.1;y=0;}continue;}
+    const rx=x*cr-y*sr,ry=x*sr+y*cr;
+    const px=Math.round((rx*zoom*.22+.5)*W),py=Math.round((ry*zoom*.22+.5)*H);
+    if(px>=0&&px<W&&py>=0&&py<H)hist[py*W+px]++;
+  }
+  drawHist(hist,W,H,gamma,pal);
+  document.getElementById('st-pts').textContent='350k';
+  setStatus('done',`w=[${w.map(v=>v.toFixed(1)).join(',')}]`);
+}
+function schedFlame(){if(timers.f)clearTimeout(timers.f);timers.f=setTimeout(renderFlame,80);}
+function flPre(name,btn){
+  const p=FL_PRE[name];if(!p)return;
+  flFuncs=p.f;
+  p.w.forEach((v,i)=>{document.getElementById('fl-w'+i).value=v;document.getElementById('fl-wv'+i).textContent=v.toFixed(2);});
+  document.querySelectorAll('#panel-flame .prbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');schedFlame();
+}
+function randomizeFlame(){
+  for(let i=0;i<5;i++){const v=Math.random()*2;document.getElementById('fl-w'+i).value=v;document.getElementById('fl-wv'+i).textContent=v.toFixed(2);}
+  flFuncs=FL_PRE.default.f.map(f=>({a:f.a+(Math.random()-.5)*.7,b:f.b+(Math.random()-.5)*.7,c:f.c+(Math.random()-.5)*.4,d:f.d+(Math.random()-.5)*.7,e:f.e+(Math.random()-.5)*.7,f:f.f+(Math.random()-.5)*.4}));
+  document.querySelectorAll('#panel-flame .prbtn').forEach(b=>b.classList.remove('on'));
+  schedFlame();
+}
+
+// ═══════════════════════════════════════════════════════
+// TOOL 4: ANIMATED MORPH
+// ═══════════════════════════════════════════════════════
+let animPlaying=false,animRAF=null,animT=0,animRot=0;
+let kfA=null,kfB=null;
+let parts=null;
+const NPART=220000;
+let lastT=0,fps=0;
+
+function randKF(){return{w:[0,1,2,3,4].map(()=>Math.random()*2),f:FL_PRE.default.f.map(f=>({a:f.a+(Math.random()-.5)*.7,b:f.b+(Math.random()-.5)*.7,c:f.c+(Math.random()-.5)*.4,d:f.d+(Math.random()-.5)*.7,e:f.e+(Math.random()-.5)*.7,f:f.f+(Math.random()-.5)*.4}))};}
+function curKF(){return{w:[0,1,2,3,4].map(i=>gv('an-w'+i)),f:FL_PRE.default.f.map(f=>({...f}))};}
+function lerp(a,b,t){return a+(b-a)*t;}
+function ease(t,type){
+  switch(type){
+    case'elastic':{const c=2*Math.PI/3;return t===0?0:t===1?1:Math.pow(2,-10*t)*Math.sin((t*10-.75)*c)+1;}
+    case'bounce':{const n1=7.5625,d1=2.75;let tt=t;if(tt<1/d1)return n1*tt*tt;else if(tt<2/d1){tt-=1.5/d1;return n1*tt*tt+.75;}else if(tt<2.5/d1){tt-=2.25/d1;return n1*tt*tt+.9375;}else{tt-=2.625/d1;return n1*tt*tt+.984375;}}
+    case'linear':return t;
+    default:{return t<.5?4*t*t*t:(1-Math.pow(-2*t+2,3))/2;}
+  }
+}
+function interpKF(a,b,et){return{w:a.w.map((v,i)=>lerp(v,b.w[i],et)),f:a.f.map((f,fi)=>({a:lerp(f.a,b.f[fi].a,et),b:lerp(f.b,b.f[fi].b,et),c:lerp(f.c,b.f[fi].c,et),d:lerp(f.d,b.f[fi].d,et),e:lerp(f.e,b.f[fi].e,et),f:lerp(f.f,b.f[fi].f,et)}))}}
+
+function initParticles(){
+  parts={x:new Float32Array(NPART),y:new Float32Array(NPART)};
+  for(let i=0;i<NPART;i++){parts.x[i]=(Math.random()-.5)*2;parts.y[i]=(Math.random()-.5)*2;}
+  if(!kfA)kfA=curKF();if(!kfB)kfB=randKF();
+}
+function renderAnimFrame(){
+  const now=performance.now();
+  if(lastT){fps=Math.round(1000/(now-lastT));}lastT=now;
+  const[W,H,cw,ch]=getWH();
+  if(cnv.width!==W){cnv.width=W;cnv.height=H;cnv.style.width=cw+'px';cnv.style.height=ch+'px';}
+  const spd=gv('an-spd'),spray=gv('an-spray'),zpulse=gv('an-zpulse'),rotspd=gv('an-rotspd'),gamma=gv('an-gamma');
+  const easetype=gs('an-ease'),pal=gs('an-pal');
+  animT=Math.min(animT+spd,1);animRot+=rotspd;
+  if(animT>=1){kfA=kfB;kfB=randKF();animT=0;kfA.w.forEach((v,i)=>{document.getElementById('an-w'+i).value=v;document.getElementById('an-wv'+i).textContent=v.toFixed(2);});}
+  const et=ease(animT,easetype),kf=interpKF(kfA,kfB,et);
+  const zoom=1+zpulse*Math.sin(animRot*3)*.5;
+  const cr=Math.cos(animRot),sr=Math.sin(animRot);
+  const px=parts.x,py=parts.y,N=160000;
+  const hist=new Float32Array(W*H);
+  for(let i=0;i<N;i++){
+    const idx=Math.floor(Math.random()*NPART);
+    if(Math.random()<spray*.025){px[idx]=(Math.random()-.5)*2;py[idx]=(Math.random()-.5)*2;}
+    const fi=Math.floor(Math.random()*kf.f.length);
+    const f=kf.f[fi];
+    const nx=f.a*px[idx]+f.b*py[idx]+f.c,ny=f.d*px[idx]+f.e*py[idx]+f.f;
+    const[vx,vy]=applyVar(nx,ny,kf.w);
+    if(!isFinite(vx)||!isFinite(vy)||Math.abs(vx)>6||Math.abs(vy)>6){px[idx]=(Math.random()-.5)*2;py[idx]=(Math.random()-.5)*2;continue;}
+    px[idx]=vx;py[idx]=vy;
+    const rx=vx*cr-vy*sr,ry=vx*sr+vy*cr;
+    const sx=Math.round((rx*zoom*.22+.5)*W),sy=Math.round((ry*zoom*.22+.5)*H);
+    if(sx>=0&&sx<W&&sy>=0&&sy<H)hist[sy*W+sx]++;
+  }
+  drawHist(hist,W,H,gamma,pal);
+  document.getElementById('st-pts').textContent=N+'';
+  setStatus(`morph ${(animT*100).toFixed(0)}%`,'→ next keyframe');
+  document.getElementById('fps').textContent=fps+' fps';
+  if(animPlaying)animRAF=requestAnimationFrame(renderAnimFrame);
+}
+function togglePlay(){
+  animPlaying=!animPlaying;
+  const b=document.getElementById('playbtn');
+  b.textContent=animPlaying?'⏸ PAUSE':'▶ PLAY';
+  b.classList.toggle('stop',animPlaying);
+  if(animPlaying){if(!parts)initParticles();animRAF=requestAnimationFrame(renderAnimFrame);}
+  else if(animRAF)cancelAnimationFrame(animRAF);
+}
+function animNewKF(){kfB=randKF();animT=0;if(!animPlaying){if(!parts)initParticles();renderAnimFrame();}}
+function animRestart(){if(kfA)kfA=curKF();kfB=randKF();animT=0;}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize',()=>{
+  if(currentTool==='gravity')schedGravity();
+  else if(currentTool==='attractor')schedAtr();
+  else if(currentTool==='flame')schedFlame();
+});
+
+schedGravity();
+</script>
+</body>
+</html>
